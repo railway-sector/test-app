@@ -1,25 +1,56 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import "./index.css";
+import "./App.css";
+
+import MapDisplay from "./components/MapDisplay";
+import Header from "./components/Header";
+import { CalciteShell } from "@esri/calcite-components-react";
+import "@esri/calcite-components/dist/components/calcite-shell";
+import React, { createContext, useState, useEffect } from "react";
+import LotChart from "./components/LotChart";
+
+type MyDropdownContextType = {
+  municipals: any;
+  updateMunicipals: any;
+  barangays: any;
+  updateBarangays: any;
+};
+
+const initialState = {
+  municipals: undefined,
+  updateMunicipals: undefined,
+  barangays: undefined,
+  updateBarangays: undefined,
+};
+
+export const MyContext = createContext<MyDropdownContextType>({
+  ...initialState, // instead of defining initial value for each, ... means all.
+});
 
 function App() {
+  const [municipals, setMunicipals] = useState<any>(); // note to use the same name 'municipals' defined above.
+  const updateMunicipals = (newMunicipal: any) => {
+    setMunicipals(newMunicipal);
+  };
+
+  const [barangays, setBarangays] = useState<any>();
+  const updateBarangays = (newBarangay: any) => {
+    setBarangays(newBarangay);
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+    <>
+      <CalciteShell>
+        {/* Include components where you want to fetch information inside MyContext */}
+
+        <MyContext
+          value={{ municipals, updateMunicipals, barangays, updateBarangays }}
         >
-          Learn React
-        </a>
-      </header>
-    </div>
+          <MapDisplay />
+          <Header />
+          <LotChart />
+        </MyContext>
+      </CalciteShell>
+    </>
   );
 }
 

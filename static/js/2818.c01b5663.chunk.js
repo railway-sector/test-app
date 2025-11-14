@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunktest_app=self.webpackChunktest_app||[]).push([[2818],{82818:(e,s,p)=>{p.d(s,{PieChartAm5:()=>t.r,PieSeriesAm5:()=>a.w});var t=p(28704),a=p(15457)}}]);

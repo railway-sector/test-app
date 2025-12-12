@@ -38,6 +38,30 @@ export default function DropdownContext() {
     updateBarangays(obj.name);
   };
 
+  const customstyles = {
+    option: (styles: any, { data, isDisabled, isFocused, isSelected }: any) => {
+      // const color = chroma(data.color);
+      return {
+        ...styles,
+        backgroundColor: isFocused
+          ? "#999999"
+          : isSelected
+          ? "#2b2b2b"
+          : "#2b2b2b",
+        color: "#ffffff",
+      };
+    },
+
+    control: (defaultStyles: any) => ({
+      ...defaultStyles,
+      backgroundColor: "#2b2b2b",
+      borderColor: "#949494",
+      color: "#ffffff",
+      touchUi: false,
+    }),
+    singleValue: (defaultStyles: any) => ({ ...defaultStyles, color: "#fff" }),
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "row", margin: "auto" }}>
       <span style={{ color: "white", paddingRight: "5px", margin: "auto" }}>
@@ -48,6 +72,7 @@ export default function DropdownContext() {
         options={municipal} // initial items in the dropdown
         onChange={handleMunicipalityChange}
         getOptionLabel={(x: any) => x.field1}
+        styles={customstyles}
       />
       <span
         style={{
@@ -64,6 +89,7 @@ export default function DropdownContext() {
         options={barangayList} // initial items in the dropdown
         onChange={handleBarangayChange}
         getOptionLabel={(x: any) => x.name}
+        styles={customstyles}
       />
     </div>
   );

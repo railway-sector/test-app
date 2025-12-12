@@ -2,7 +2,7 @@ import React, { useState, useEffect, use, useRef } from "react";
 import { MyContext } from "../App";
 import {
   generateLotData,
-  NumberOfLotsByStatus,
+  lotStatusQuery,
   totalNumberOfLots,
   zoomToLayer,
 } from "../Query";
@@ -13,9 +13,10 @@ import am5themes_Responsive from "@amcharts/amcharts5/themes/Responsive";
 import { lotLayer } from "../layers";
 import "@arcgis/map-components/dist/components/arcgis-map";
 import "@arcgis/map-components/components/arcgis-map";
-
 import { CalcitePanel } from "@esri/calcite-components-react";
 import "@esri/calcite-components/dist/components/calcite-panel";
+import Query from "@arcgis/core/rest/support/Query";
+import FeatureFilter from "@arcgis/core/layers/support/FeatureFilter";
 
 /// Dispose function
 function maybeDisposeRoot(divId) {
@@ -31,9 +32,9 @@ export default function LotChart() {
 
   // useRef hook is used to persist values across renders without
   // causing a re-render (mutable values)
-  const pieSeriesRef = useRef({});
-  const legendRef = useRef({});
-  const chartRef = useRef({});
+  // const pieSeriesRef = useRef({});
+  // const legendRef = useRef({});
+  // const chartRef = useRef({});
 
   const arcgisMap = document.querySelector("arcgis-map");
   const { municipals, barangays } = use(MyContext);
@@ -100,7 +101,7 @@ export default function LotChart() {
         layout: root.verticalLayout,
       })
     );
-    chartRef.current = chart;
+    // chartRef.current = chart;
 
     // Create series
     var pieSeries = chart.series.push(
@@ -115,7 +116,56 @@ export default function LotChart() {
         scale: 1.8,
       })
     );
-    pieSeriesRef.current = pieSeries;
+
+    pieSeries.slices.template.events.on("click", (ev) => {
+      const Category = ev.target.dataItem?.dataContext.category;
+      const selectedValue = lotStatusQuery.find(
+        (emp) => emp.category === Category
+      )?.value;
+      console.log(Category, ": ", selectedValue);
+
+      var highlightSelect;
+      const query = lotLayer.createQuery();
+
+      arcgisMap?.whenLayerView(lotLayer).then((layerView) => {
+        lotLayer.queryFeatures(query).then((results) => {
+          const result_length = results.features;
+          const row_n = result_length.length;
+
+          let objID = [];
+          for (var i = 0; i < row_n; i++) {
+            const obj = results.features[i].attributes.OBJECTID;
+            objID.push(obj);
+          }
+          console.log(objID);
+
+          var queryExt = new Query({
+            objectIds: objID,
+          });
+
+          lotLayer.queryExtent(queryExt).then((result) => {
+            if (result.extent) {
+              arcgisMap?.goTo(result.extent);
+            }
+          });
+
+          if (highlightSelect) {
+            highlightSelect.remove();
+          }
+          highlightSelect = layerView.highlight(objID);
+          arcgisMap?.view.on("click", function () {
+            layerView.filter = new FeatureFilter({
+              where: undefined,
+            });
+            highlightSelect.remove();
+          });
+        });
+        layerView.filter = new FeatureFilter({
+          where: "StatusLA" + " = " + selectedValue,
+        });
+      });
+    });
+
     chart.series.push(pieSeries);
     pieSeries.data.setAll(chartData);
 
@@ -135,85 +185,71 @@ export default function LotChart() {
     pieSeries.ticks.template.set("visible", false);
 
     // Legend
-    // var legend = chart.children.push(
-    //   am5.Legend.new(root, {
-    //     centerX: am5.percent(50),
-    //     x: am5.percent(50),
-    //     // scale: 0.9,
-    //   })
-    // );
+    var legend = chart.children.push(
+      am5.Legend.new(root, {
+        centerX: am5.percent(50),
+        x: am5.percent(50),
+        scale: 0.9,
+      })
+    );
     // legendRef.current = legend;
-    // legend.data.setAll(pieSeries.dataItems);
+    legend.data.setAll(pieSeries.dataItems);
 
-    // // Change the size of legend markers
-    // legend.markers.template.setAll({
-    //   width: 18,
-    //   height: 18,
-    // });
+    // Change the size of legend markers
+    legend.markers.template.setAll({
+      width: 18,
+      height: 18,
+    });
 
-    // // Change the marker shape
-    // legend.markerRectangles.template.setAll({
-    //   cornerRadiusTL: 10,
-    //   cornerRadiusTR: 10,
-    //   cornerRadiusBL: 10,
-    //   cornerRadiusBR: 10,
-    // });
+    // Change the marker shape
+    legend.markerRectangles.template.setAll({
+      cornerRadiusTL: 10,
+      cornerRadiusTR: 10,
+      cornerRadiusBL: 10,
+      cornerRadiusBR: 10,
+    });
 
-    // legend.labels.template.setAll({
-    //   oversizedBehavior: "truncate",
-    //   fill: am5.color("#ffffff"),
-    //   width: 250,
-    //   maxWidth: 270,
-    // });
+    legend.labels.template.setAll({
+      oversizedBehavior: "truncate",
+      fill: am5.color("#ffffff"),
+      width: 250,
+      maxWidth: 270,
+    });
 
-    // legend.valueLabels.template.setAll({
-    //   textAlign: "right",
-    //   fill: am5.color("#ffffff"),
-    // });
+    legend.valueLabels.template.setAll({
+      textAlign: "right",
+      fill: am5.color("#ffffff"),
+    });
 
-    // legend.itemContainers.template.setAll({
-    //   paddingTop: 3,
-    //   paddingBottom: 1,
-    // });
+    legend.itemContainers.template.setAll({
+      paddingTop: 3,
+      paddingBottom: 1,
+    });
 
     return () => {
       root.dispose();
     };
   }, [chartID, chartData]);
 
-  useEffect(() => {
-    pieSeriesRef.current?.data.setAll(chartData);
-    legendRef.current?.data?.setAll(pieSeriesRef.current.dataItems);
-  });
+  // useEffect(() => {
+  //   pieSeriesRef.current?.data.setAll(chartData);
+  //   legendRef.current?.data?.setAll(pieSeriesRef.current.dataItems);
+  // });
 
   return (
     <>
-      <CalcitePanel
-        slot="panel-end"
-        scale="s"
+      <div style={{ fontSize: "50px", color: "white" }}>{totalNumber}</div>
+      <div
+        id={chartID}
         style={{
-          width: "35vw",
-          padding: "0 1rem",
-          borderStyle: "solid",
-          borderRightWidth: 3.5,
-          borderLeftWidth: 3.5,
-          borderBottomWidth: 4.5,
-          borderColor: "#555555",
+          // width: chart_width,
+          height: "60vh",
+          backgroundColor: "rgb(0,0,0,0)",
+          color: "white",
+          marginTop: "8%",
+          marginBottom: "7px",
         }}
-      >
-        <div style={{ fontSize: "50px", color: "white" }}>{totalNumber}</div>
-        <div
-          id={chartID}
-          style={{
-            // width: chart_width,
-            height: "60vh",
-            backgroundColor: "rgb(0,0,0,0)",
-            color: "white",
-            marginTop: "8%",
-            marginBottom: "7px",
-          }}
-        ></div>
-      </CalcitePanel>
+      ></div>
     </>
   );
 }

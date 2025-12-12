@@ -14,6 +14,24 @@ const lotStausLabel = [
   "Harmonized",
 ];
 
+export const lotStatusColor = [
+  "#00734d",
+  "#0070ff",
+  "#ffff00",
+  "#ffaa00",
+  "#FF5733",
+  "#70AD47",
+  "#FF0000",
+  "#B2B2B2",
+];
+export const lotStatusQuery = lotStausLabel.map((status, index) => {
+  return Object.assign({
+    category: status,
+    value: index + 1,
+    color: lotStatusColor[index],
+  });
+});
+
 // 1. One queryFeature in one funcion
 export async function totalNumberOfLots(municipals: any, barangays: any) {
   var total_lot_number = new StatisticDefinition({
